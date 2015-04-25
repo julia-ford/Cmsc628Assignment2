@@ -1,8 +1,11 @@
 package juliaford2015.cmsc628assignment2;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -13,6 +16,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
@@ -22,7 +26,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 // reference: https://developer.android.com/training/location/receive-location-updates.html
 
-public class MainActivity extends ActionBarActivity implements OnMapClickListener, OnMarkerClickListener {
+public class MainActivity extends ActionBarActivity implements OnMapClickListener, OnMarkerClickListener, OnMapReadyCallback {
 
     static float Latitude;
     static float Longitude;
@@ -34,19 +38,28 @@ public class MainActivity extends ActionBarActivity implements OnMapClickListene
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_maps);
 
-//        if (savedInstanceState==null)
-//        {
-//            Latitude = 90.0f; // defaults to North Pole
-//            Longitude = 0.0f;
-//        }
-//        destination = new LatLng(Latitude, Longitude);
-//        map = ((MapFragment)getFragmentManager().findFragmentById(R.id.map)).getMap();
-//        map.setMyLocationEnabled(true);
-//        map.getUiSettings().setCompassEnabled(true);
-//        map.getUiSettings().setZoomControlsEnabled(true);
-//        map.getUiSettings().setMyLocationButtonEnabled(true);
+        if (savedInstanceState==null)
+        {
+            Latitude = 90.0f; // defaults to North Pole
+            Longitude = 0.0f;
+        }
+        destination = new LatLng(Latitude, Longitude);
+        try {
+            Fragment frag = getFragmentManager().findFragmentById(R.id.map);
+            // TODO: fix here, frag returns null
+            map = ((MapFragment) frag).getMap();
+            int i = 1;
+        }
+        catch (Exception e) {
+            String strerr = e.getMessage();
+            Log.i("error",strerr);
+        }
+        map.setMyLocationEnabled(true);
+        map.getUiSettings().setCompassEnabled(true);
+        map.getUiSettings().setZoomControlsEnabled(true);
+        map.getUiSettings().setMyLocationButtonEnabled(true);
         LatLng HAMBURG  = new LatLng(53.558, 9.927);
         map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
         map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
@@ -62,7 +75,16 @@ public class MainActivity extends ActionBarActivity implements OnMapClickListene
         CircleOptions circleOptions = new CircleOptions().center(HAMBURG).radius(100).strokeColor(Color.RED);
         Circle circle = map.addCircle(circleOptions);
         map.setOnMapClickListener(this);
-        map.setOnMarkerClickListener(this);
+//        map.setOnMarkerClickListener(this);
+//        MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
+//        try {
+//            mapFragment.getMapAsync(this);
+//        }
+//        catch (Exception e)
+//        {
+//            e.printStackTrace();
+//        }
+        Log.i("butt","hello world");
     }
 
 
@@ -97,5 +119,13 @@ public class MainActivity extends ActionBarActivity implements OnMapClickListene
     @Override
     public boolean onMarkerClick(Marker marker) {
         return false;
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        destination = new LatLng(0,0);
+        map.setMyLocationEnabled(true);
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(destination, 13));
+
     }
 }
