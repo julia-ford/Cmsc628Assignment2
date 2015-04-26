@@ -1,102 +1,108 @@
 package juliaford2015.cmsc628assignment2;
 
+import android.graphics.Color;
 import android.location.Location;
-import android.location.LocationListener;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.Toast;
-
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMyLocationChangeListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MapsActivity extends FragmentActivity implements LocationListener, OnMapClickListener, OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnClickListener, OnMapClickListener, OnMapReadyCallback, OnMyLocationChangeListener {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
+    private MarkerOptions myMarkerOptions;
+    private MarkerOptions goalMarkerOptions;
+    private Marker myMarker;
+    private Marker goalMarker;
 
-    private static final String myString = "Me";
-    private static final String destString = "End";
+    private static final double RADIUS = 200;
+    private static final String myTitle = "Me";
+    private static final String goalTitle = "End";
     private static final String STATE_MY_LOCATION = "MyLocation";
     private static final String STATE_DESTINATION = "Destination";
 
     private LatLng myLatLng = null;
-    private LatLng destination = null;
+    private LatLng goalLatLng = null;
+    private CircleOptions circleOptions = null;
+    private Circle circle = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         setUpMapIfNeeded();
-        if (savedInstanceState == null) {
-            setMyLatLng();
-        }
-        else {
+        (findViewById(R.id.button)).setOnClickListener(this);
+        if (savedInstanceState != null) {
             /*
                 it's probably most efficient to try temporarily storing the user's location
                 data. it can be retrieved faster than getting info from the google map.
              */
             try {
                 double[] myLoc = savedInstanceState.getDoubleArray(STATE_MY_LOCATION);
-                myLatLng = new LatLng(myLoc[0], myLoc[1]);
+                if (myLoc != null) {
+                    myLatLng = new LatLng(myLoc[0], myLoc[1]);
+                }
             }
             catch (Exception e) {
-                setMyLatLng(); // didn't work. try again.
+                e.printStackTrace();
             }
             try {
                 double[] destLoc = savedInstanceState.getDoubleArray(STATE_DESTINATION);
-                destination = new LatLng(destLoc[0], destLoc[1]);
+                if (destLoc != null) {
+                    goalLatLng = new LatLng(destLoc[0], destLoc[1]);
+                    onMapClick(goalLatLng); //not the cleanest, but it works.
+                }
             }
             catch (Exception e) {
                 // also automatically occurs if user hasn't selected a location yet.
                 e.printStackTrace();
             }
         }
-
     }
 
     /**
-     * uses the google maps API to find the user's location
-     * then those values are read into this app
+     * pass LatLng -> move destination marker and circle
      */
-    private void setMyLatLng() {
-        Location myLocation = mMap.getMyLocation();
-        // TODO: can't get location... why?
-        if (myLocation != null) {
-            myLatLng = new LatLng(myLocation.getLatitude(), myLocation.getLongitude());
-            mMap.addMarker(new MarkerOptions().position(myLatLng).title(myString));
-            Toast.makeText(getApplicationContext(),
-                    "Me: " + myLatLng.latitude + "," + myLatLng.longitude, Toast.LENGTH_SHORT).show();
-        }
-        else {
-            Toast.makeText(getApplicationContext(),
-                    "Could not access my location!", Toast.LENGTH_SHORT).show();
-        }
-    }
-
     @Override
-    public void onMapClick(LatLng d) {
-        destination = d;
-        mMap.clear();
-        if (myLatLng != null) {
-            mMap.addMarker(new MarkerOptions().position(myLatLng).title(myString));
-        }
-        mMap.addMarker(new MarkerOptions().position(destination).title(destString));
+    public void onMapClick(LatLng ll) {
+        goalLatLng = ll;
+        if (goalMarkerOptions == null)
+            goalMarkerOptions = new MarkerOptions().icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+        if (goalMarker != null)
+            goalMarker.remove();
+        goalMarker = mMap.addMarker(goalMarkerOptions.position(ll).title(goalTitle));
+        if (circleOptions == null)
+            circleOptions = new CircleOptions().radius(RADIUS).strokeColor(Color.RED).strokeWidth(2);
+        if (circle != null)
+            circle.remove();
+        circle = mMap.addCircle(circleOptions.center(ll));
     }
 
+    /**
+     * store current position and destination position data
+     */
     @Override
     protected void onSaveInstanceState(Bundle savedInstanceState) {
-        if (myLatLng != null)
-            savedInstanceState.putDoubleArray(STATE_MY_LOCATION,
+        if (myLatLng != null) savedInstanceState.putDoubleArray(STATE_MY_LOCATION,
                     new double[]{myLatLng.latitude, myLatLng.longitude});
-        if (destination != null)
-            savedInstanceState.putDoubleArray(STATE_DESTINATION,
-                    new double[]{destination.latitude, destination.longitude});
+        if (goalLatLng != null) savedInstanceState.putDoubleArray(STATE_DESTINATION,
+                    new double[]{goalLatLng.latitude, goalLatLng.longitude});
     }
 
 
@@ -117,16 +123,6 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
      * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
      * installed) and the map has not already been instantiated.. This will ensure that we only ever
      * call {@link #setUpMap()} once when {@link #mMap} is not null.
-     * <p/>
-     * If it isn't installed {@link SupportMapFragment} (and
-     * {@link com.google.android.gms.maps.MapView MapView}) will show a prompt for the user to
-     * install/update the Google Play services APK on their device.
-     * <p/>
-     * A user can return to this FragmentActivity after following the prompt and correctly
-     * installing/updating/enabling the Google Play services. Since the FragmentActivity may not
-     * have been completely destroyed during this process (it is likely that it would only be
-     * stopped or paused), {@link #onCreate(Bundle)} may not be called again so we should call this
-     * method in {@link #onResume()} to guarantee that it will be called.
      */
     private void setUpMapIfNeeded() {
         // Do a null check to confirm that we have not already instantiated the map.
@@ -147,53 +143,62 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
     }
 
     /**
-     * This is where we can add markers or lines, add listeners or move the camera. In this case, we
-     * just add a marker near Africa.
-     * <p/>
      * This should only be called once and when we are sure that {@link #mMap} is not null.
      */
     private void setUpMap() {
-        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setCompassEnabled(true);
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
         mMap.setOnMapClickListener(this);
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        if (myLatLng != null && destination != null) {
-            double latDistance = Math.abs(myLatLng.latitude - destination.latitude);
-            double lonDistance = Math.abs(myLatLng.longitude - destination.longitude);
-            // get squared distance
-            double distance = Math.sqrt(Math.pow(latDistance, 2) + Math.pow(lonDistance, 2));
-            if (distance <= 200) {
-                // ?
-            }
-        }
-    }
-
-    @Override
-    public void onStatusChanged(String s, int i, Bundle bundle) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String s) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String s) {
-
+        mMap.setOnMyLocationChangeListener(this);
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        setMyLatLng();
-        if (myLatLng != null){
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myLatLng, 13));
+
+    }
+
+    @Override
+    public void onMyLocationChange(Location location) {
+        myLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+        // (set up and) move current position marker
+        if (myMarkerOptions == null)
+            myMarkerOptions = new MarkerOptions().icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+        if (myMarker != null)
+            myMarker.remove();
+        myMarker = mMap.addMarker(myMarkerOptions.position(myLatLng).title(myTitle));
+        //  if there is no destination specified, just zoom to current position:
+        if (goalLatLng == null)
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(myLatLng));
+        //  or, try to calculate distance between current and destination positions:
+        if (myLatLng != null && goalLatLng != null) {
+            double latDistance = Math.abs(myLatLng.latitude - goalLatLng.latitude);
+            double lonDistance = Math.abs(myLatLng.longitude - goalLatLng.longitude);
+            // get magnitude of distance
+            double magDistance = Math.sqrt(Math.pow(latDistance, 2) + Math.pow(lonDistance, 2));
+            if (magDistance <= RADIUS) {
+                Toast.makeText(getApplicationContext(),
+                    "diff: " + magDistance, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    /**
+     * custom button changes the map zoom to show both the current location marker
+     * and the destination marker, zooming out to a comfortable distance
+     */
+    @Override
+    public void onClick(View view) {
+        if (view.getId()==R.id.button && goalLatLng != null) {
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            builder.include(myLatLng);
+            builder.include(goalLatLng);
+            LatLngBounds bounds = builder.build();
+            mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 1));
+            // zoom out a bit, otherwise markers will be on screen edges
+            mMap.moveCamera(CameraUpdateFactory.zoomOut());
         }
     }
 }
