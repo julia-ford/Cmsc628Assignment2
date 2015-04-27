@@ -67,7 +67,9 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
                 goalLatLng = new LatLng(destLoc[0], destLoc[1]);
                 onMapClick(goalLatLng); //not the cleanest, but it works.
             }
-            catch (Exception e) {e.printStackTrace();}
+            catch (Exception e) {
+                e.printStackTrace();
+            }
             try {
                 ((EditText)(findViewById(R.id.search_bar))).setText(savedInstanceState.getString(STATE_SEARCH_TEXT));
             }
@@ -76,7 +78,7 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
                 e.printStackTrace();
             }
         }
-
+//        FixZoom();
     }
 
     /**
@@ -194,6 +196,18 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
         }
     }
 
+    private void FixZoom() {
+        if (goalLatLng != null) {
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            builder.include(myLatLng);
+            builder.include(goalLatLng);
+            LatLngBounds bounds = builder.build();
+            mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 1));
+            // zoom out a bit, otherwise markers will be on screen edges
+            mMap.moveCamera(CameraUpdateFactory.zoomOut());
+        }
+    }
+
     /**
      * custom button changes the map zoom to show both the current location marker
      * and the destination marker, zooming out to a comfortable distance
@@ -202,22 +216,13 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.fixButton:
-                if (goalLatLng != null) {
-                    LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                    builder.include(myLatLng);
-                    builder.include(goalLatLng);
-                    LatLngBounds bounds = builder.build();
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 1));
-                    // zoom out a bit, otherwise markers will be on screen edges
-                    mMap.moveCamera(CameraUpdateFactory.zoomOut());
-                }
+                FixZoom();
                 break;
             case R.id.clearButton:
                 goalLatLng = null;
-                goalMarker.remove();
-                circle.remove();
+                if (goalMarker != null) goalMarker.remove();
+                if (circle != null) circle.remove();
                 break;
-
             case R.id.searchbutton:
                 EditText searchbar = (EditText) findViewById(R.id.searchbar);
                 String searchtext = searchbar.getText().toString();

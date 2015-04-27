@@ -2,43 +2,55 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MapActivity" >
+    android:layout_height="match_parent">
 
     <fragment
         android:id="@+id/map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:name="com.google.android.gms.maps.SupportMapFragment"
+        tools:layout="@layout/activity_maps"
+        tools:context=".MapActivity" />
 
-        tools:layout="@layout/activity_maps" />
-
-    <Button
-        android:id="@+id/fixButton"
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="68dp"
-        android:layout_weight=".20"
-        android:text="@string/auto_button_label"
-        android:layout_gravity="left|bottom" />
+        android:layout_gravity="left|top">
+        <Button
+            android:id="@+id/clearButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="@string/clear_button_label" />
+        <Button
+            android:id="@+id/fixButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_toEndOf="@id/clearButton"
+            android:layout_toRightOf="@id/clearButton"
+            android:text="@string/auto_button_label" />
 
-    <EditText
-        android:id="@+id/searchbar"
-        android:layout_width="128dp"
-        android:layout_height="68dp"
-        android:layout_gravity="left|top"/>
+    </RelativeLayout>
 
-    <Button
-        android:id="@+id/searchbutton"
-        android:layout_width="68dp"
-        android:layout_height="68dp"
-        android:text="Go"
-        android:layout_gravity="right|center"/>
-
-    <Button
-        android:id="@+id/clearButton"
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="68dp"
-        android:layout_weight=".20"
-        android:text="@string/clear_button_label"
-        android:layout_gravity="center|bottom" />
+        android:layout_gravity="left|bottom">
+        <Button
+            android:id="@+id/searchbutton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="@string/search_button_label" />
+        <EditText
+            android:inputType="text"
+            android:id="@+id/searchbar"
+            android:layout_width="128dp"
+            android:layout_height="match_parent"
+            android:layout_toRightOf="@id/searchbutton"
+            android:layout_toEndOf="@id/searchbutton"
+            android:background="@color/background_material_light"/>
+
+    </RelativeLayout>
+
+
+
 </FrameLayout>
