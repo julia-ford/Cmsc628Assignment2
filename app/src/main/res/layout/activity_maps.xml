@@ -25,14 +25,14 @@
         android:id="@+id/searchbar"
         android:layout_width="128dp"
         android:layout_height="68dp"
-        android:layout_gravity="left|top"/>
+        android:layout_gravity="left|top"
 
     <Button
         android:id="@+id/searchbutton"
         android:layout_width="68dp"
         android:layout_height="68dp"
         android:text="Go"
-        android:layout_gravity="top|right"/>
+        android:layout_gravity="left"/>
 
     <Button
         android:id="@+id/clearButton"
