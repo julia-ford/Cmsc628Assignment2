@@ -1,11 +1,14 @@
 package juliaford2015.cmsc628assignment2;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.location.Location;
 import android.support.v4.app.FragmentActivity;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.EditText;
 import android.widget.Toast;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -22,7 +25,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import android.widget.EditText;
 
 public class MapsActivity extends FragmentActivity implements OnClickListener, OnMapClickListener, OnMapReadyCallback, OnMyLocationChangeListener {
 
@@ -217,6 +219,19 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
             mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 1));
             // zoom out a bit, otherwise markers will be on screen edges
             mMap.moveCamera(CameraUpdateFactory.zoomOut());
+        }
+        else
+        {
+            EditText searchbar = (EditText)findViewById(R.id.searchbar);
+            String searchtext = searchbar.getText().toString();
+            String formatted = toFormattedQuery(searchtext, myLatLng);
+            if (view.getId() == R.id.searchbutton && !searchtext.equals(""))
+            {
+                Uri myIntentUri = Uri.parse(formatted);
+                Intent mapIntent = new Intent(Intent.ACTION_VIEW, myIntentUri);
+                mapIntent.setPackage("com.google.android.apps.maps");
+                startActivity(mapIntent);
+            }
         }
     }
 }
