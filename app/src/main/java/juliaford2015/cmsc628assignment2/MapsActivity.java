@@ -51,8 +51,11 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         setUpMapIfNeeded();
+        mMap.setOnMapClickListener(this);
+        mMap.setOnMyLocationChangeListener(this);
         (findViewById(R.id.fixButton)).setOnClickListener(this);
         (findViewById(R.id.clearButton)).setOnClickListener(this);
+        //(findViewById(R.id.searchbutton)).setOnClickListener(this);
         if (savedInstanceState != null) {
             try {
                 double[] myLoc = savedInstanceState.getDoubleArray(STATE_MY_LOCATION);
@@ -160,8 +163,6 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
         mMap.getUiSettings().setCompassEnabled(true);
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
-        mMap.setOnMapClickListener(this);
-        mMap.setOnMyLocationChangeListener(this);
     }
 
     @Override
@@ -221,10 +222,11 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
                 EditText searchbar = (EditText) findViewById(R.id.searchbar);
                 String searchtext = searchbar.getText().toString();
                 String formatted = toFormattedQuery(searchtext, myLatLng);
-                if (view.getId() == R.id.searchbutton && !searchtext.equals("")) {
+                if (!searchtext.equals("")) {
                     Uri myIntentUri = Uri.parse(formatted);
                     Intent mapIntent = new Intent(Intent.ACTION_VIEW, myIntentUri);
                     mapIntent.setPackage("com.google.android.apps.maps");
+
                     startActivity(mapIntent);
                 }
         }
