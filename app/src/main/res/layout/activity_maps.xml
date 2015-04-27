@@ -10,7 +10,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:name="com.google.android.gms.maps.SupportMapFragment"
-        />
+
+        tools:layout="@layout/activity_maps" />
 
     <Button
         android:id="@+id/fixButton"
@@ -20,12 +21,13 @@
         android:text="@string/auto_button_label"
         android:layout_gravity="left|bottom" />
 
-    <Button
+    <EditText
+        android:id="@+id/searchbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />    <Button
         android:id="@+id/clearButton"
         android:layout_width="wrap_content"
         android:layout_height="68dp"
         android:layout_weight=".20"
         android:text="@string/clear_button_label"
-        android:layout_gravity="center|bottom" />
-
-</FrameLayout>
+        android:layout_gravity="center|bottom" /></FrameLayout>

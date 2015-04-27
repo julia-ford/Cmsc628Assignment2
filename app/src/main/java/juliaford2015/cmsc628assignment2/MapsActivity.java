@@ -22,6 +22,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import android.widget.EditText;
 
 public class MapsActivity extends FragmentActivity implements OnClickListener, OnMapClickListener, OnMapReadyCallback, OnMyLocationChangeListener {
 
@@ -34,6 +35,7 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
     private static final double RADIUS = 200;
     private static final String STATE_MY_LOCATION = "MyLocation";
     private static final String STATE_DESTINATION = "Destination";
+    private static final String STATE_SEARCH_TEXT = "SearchText";
 
     private LatLng myLatLng;
     private LatLng goalLatLng;
@@ -61,7 +63,15 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
                 onMapClick(goalLatLng); //not the cleanest, but it works.
             }
             catch (Exception e) {e.printStackTrace();}
+            try {
+                ((EditText)(findViewById(R.id.search_bar))).setText(savedInstanceState.getString(STATE_SEARCH_TEXT));
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
         }
+
     }
 
     /**
@@ -75,12 +85,12 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
         if (goalMarker != null)
             goalMarker.remove();
         goalMarker = (mMap.addMarker(goalMarkerOptions.position(goalLatLng).title(goalLatLng.toString())));
+
         if (circleOptions == null)
             circleOptions = new CircleOptions().radius(RADIUS).strokeColor(Color.RED).strokeWidth(2);
         if (circle != null)
             circle.remove();
         circle = mMap.addCircle(circleOptions.center(goalLatLng));
-        //circle.setCenter(goalLatLng);
     }
 
     /**
@@ -92,8 +102,16 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
                     new double[]{myLatLng.latitude, myLatLng.longitude});
         if (goalLatLng != null) savedInstanceState.putDoubleArray(STATE_DESTINATION,
                     new double[]{goalLatLng.latitude, goalLatLng.longitude});
+        EditText searchbar = (EditText)findViewById(R.id.searchbar);
+        if (searchbar != null) savedInstanceState.putString(STATE_SEARCH_TEXT,
+                searchbar.getText().toString());
     }
 
+    // Helper method for formatting map queries
+    private String toFormattedQuery(String unformStr, LatLng unformLL)
+    {
+        return "geo:" + unformLL.latitude + ',' + unformLL.longitude + "?q=" + unformStr;
+    }
 
     @Override
     protected void onPause() {
