@@ -22,6 +22,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import android.widget.EditText;
 
 public class MapsActivity extends FragmentActivity implements OnClickListener, OnMapClickListener, OnMapReadyCallback, OnMyLocationChangeListener {
 
@@ -36,6 +37,7 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
     private static final String goalTitle = "End";
     private static final String STATE_MY_LOCATION = "MyLocation";
     private static final String STATE_DESTINATION = "Destination";
+    private static final String STATE_SEARCH_TEXT = "SearchText";
 
     private LatLng myLatLng = null;
     private LatLng goalLatLng = null;
@@ -73,7 +75,15 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
                 // also automatically occurs if user hasn't selected a location yet.
                 e.printStackTrace();
             }
+            try {
+                ((EditText)(findViewById(R.id.search_bar))).setText(savedInstanceState.getString(STATE_SEARCH_TEXT));
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
         }
+
     }
 
     /**
@@ -103,8 +113,16 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
                     new double[]{myLatLng.latitude, myLatLng.longitude});
         if (goalLatLng != null) savedInstanceState.putDoubleArray(STATE_DESTINATION,
                     new double[]{goalLatLng.latitude, goalLatLng.longitude});
+        EditText searchbar = (EditText)findViewById(R.id.searchbar);
+        if (searchbar != null) savedInstanceState.putString(STATE_SEARCH_TEXT,
+                searchbar.getText().toString());
     }
 
+    // Helper method for formatting map queries
+    private String toFormattedQuery(String unformStr, LatLng unformLL)
+    {
+        return "geo:" + unformLL.latitude + ',' + unformLL.longitude + "?q=" + unformStr;
+    }
 
     @Override
     protected void onPause() {
