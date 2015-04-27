@@ -26,6 +26,7 @@
         android:layout_width="128dp"
         android:layout_height="68dp"
         android:layout_gravity="left|top"
+        android:background="@color/background_material_light"/>
 
     <Button
         android:id="@+id/searchbutton"
