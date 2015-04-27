@@ -32,13 +32,13 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
     private Marker goalMarker;
 
     private static final double RADIUS = 200;
-    private static final String myTitle = "Me";
-    private static final String goalTitle = "End";
     private static final String STATE_MY_LOCATION = "MyLocation";
     private static final String STATE_DESTINATION = "Destination";
 
-    private LatLng myLatLng = null;
-    private LatLng goalLatLng = null;
+    private LatLng myLatLng;
+    private LatLng goalLatLng;
+    private static Location tempLocation = new Location("temp");
+
     private CircleOptions circleOptions = null;
     private Circle circle = null;
 
@@ -47,32 +47,20 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         setUpMapIfNeeded();
-        (findViewById(R.id.button)).setOnClickListener(this);
+        (findViewById(R.id.fixButton)).setOnClickListener(this);
+        (findViewById(R.id.clearButton)).setOnClickListener(this);
         if (savedInstanceState != null) {
-            /*
-                it's probably most efficient to try temporarily storing the user's location
-                data. it can be retrieved faster than getting info from the google map.
-             */
             try {
                 double[] myLoc = savedInstanceState.getDoubleArray(STATE_MY_LOCATION);
-                if (myLoc != null) {
-                    myLatLng = new LatLng(myLoc[0], myLoc[1]);
-                }
+                myLatLng = new LatLng(myLoc[0], myLoc[1]);
             }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
+            catch (Exception e) {e.printStackTrace();}
             try {
                 double[] destLoc = savedInstanceState.getDoubleArray(STATE_DESTINATION);
-                if (destLoc != null) {
-                    goalLatLng = new LatLng(destLoc[0], destLoc[1]);
-                    onMapClick(goalLatLng); //not the cleanest, but it works.
-                }
+                goalLatLng = new LatLng(destLoc[0], destLoc[1]);
+                onMapClick(goalLatLng); //not the cleanest, but it works.
             }
-            catch (Exception e) {
-                // also automatically occurs if user hasn't selected a location yet.
-                e.printStackTrace();
-            }
+            catch (Exception e) {e.printStackTrace();}
         }
     }
 
@@ -86,12 +74,13 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
             goalMarkerOptions = new MarkerOptions().icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
         if (goalMarker != null)
             goalMarker.remove();
-        goalMarker = mMap.addMarker(goalMarkerOptions.position(ll).title(goalTitle));
+        goalMarker = (mMap.addMarker(goalMarkerOptions.position(goalLatLng).title(goalLatLng.toString())));
         if (circleOptions == null)
             circleOptions = new CircleOptions().radius(RADIUS).strokeColor(Color.RED).strokeWidth(2);
         if (circle != null)
             circle.remove();
-        circle = mMap.addCircle(circleOptions.center(ll));
+        circle = mMap.addCircle(circleOptions.center(goalLatLng));
+        //circle.setCenter(goalLatLng);
     }
 
     /**
@@ -168,19 +157,18 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
             myMarkerOptions = new MarkerOptions().icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
         if (myMarker != null)
             myMarker.remove();
-        myMarker = mMap.addMarker(myMarkerOptions.position(myLatLng).title(myTitle));
+        myMarker = mMap.addMarker(myMarkerOptions.position(myLatLng).title(myLatLng.toString()));
         //  if there is no destination specified, just zoom to current position:
         if (goalLatLng == null)
             mMap.moveCamera(CameraUpdateFactory.newLatLng(myLatLng));
         //  or, try to calculate distance between current and destination positions:
         if (myLatLng != null && goalLatLng != null) {
-            double latDistance = Math.abs(myLatLng.latitude - goalLatLng.latitude);
-            double lonDistance = Math.abs(myLatLng.longitude - goalLatLng.longitude);
-            // get magnitude of distance
-            double magDistance = Math.sqrt(Math.pow(latDistance, 2) + Math.pow(lonDistance, 2));
+            // we want straight-line distance, not pathfinding calculation
+            tempLocation.setLatitude(goalLatLng.latitude);
+            tempLocation.setLongitude(goalLatLng.longitude);
+            double magDistance = (location.distanceTo(tempLocation));
             if (magDistance <= RADIUS) {
-                Toast.makeText(getApplicationContext(),
-                    "diff: " + magDistance, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Distance: "+magDistance, Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -191,14 +179,26 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
      */
     @Override
     public void onClick(View view) {
-        if (view.getId()==R.id.button && goalLatLng != null) {
-            LatLngBounds.Builder builder = new LatLngBounds.Builder();
-            builder.include(myLatLng);
-            builder.include(goalLatLng);
-            LatLngBounds bounds = builder.build();
-            mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 1));
-            // zoom out a bit, otherwise markers will be on screen edges
-            mMap.moveCamera(CameraUpdateFactory.zoomOut());
+        switch(view.getId()) {
+            case R.id.fixButton:
+                if (goalLatLng != null) {
+                    LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                    builder.include(myLatLng);
+                    builder.include(goalLatLng);
+                    LatLngBounds bounds = builder.build();
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 1));
+                    // zoom out a bit, otherwise markers will be on screen edges
+                    mMap.moveCamera(CameraUpdateFactory.zoomOut());
+                }
+                break;
+            case R.id.clearButton:
+                goalLatLng = null;
+                goalMarker.remove();
+                circle.remove();
+                break;
         }
+
+
     }
+
 }

@@ -13,11 +13,19 @@
         />
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/fixButton"
         android:layout_width="wrap_content"
         android:layout_height="68dp"
         android:layout_weight=".20"
         android:text="@string/auto_button_label"
         android:layout_gravity="left|bottom" />
+
+    <Button
+        android:id="@+id/clearButton"
+        android:layout_width="wrap_content"
+        android:layout_height="68dp"
+        android:layout_weight=".20"
+        android:text="@string/clear_button_label"
+        android:layout_gravity="center|bottom" />
 
 </FrameLayout>
