@@ -2,8 +2,4 @@
     <string name="app_name">Cmsc628Assignment2</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
-    <string name="title_activity_maps">Map</string>
-    <string name="auto_button_label">Auto Zoom</string>
-    <string name="clear_button_label">Clear</string>
-    <string name="search_button_label">Find:</string>
 </resources>

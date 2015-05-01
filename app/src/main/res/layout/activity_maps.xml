@@ -12,45 +12,26 @@
         tools:layout="@layout/activity_maps"
         tools:context=".MapActivity" />
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="68dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="left|top">
         <Button
             android:id="@+id/clearButton"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="@string/clear_button_label" />
+            android:layout_height="wrap_content"
+            android:text="Clear" />
         <Button
             android:id="@+id/fixButton"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_toEndOf="@id/clearButton"
-            android:layout_toRightOf="@id/clearButton"
-            android:text="@string/auto_button_label" />
-
-    </RelativeLayout>
-
-    <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="68dp"
-        android:layout_gravity="left|bottom">
+            android:layout_height="wrap_content"
+            android:text="AutoZoom" />
         <Button
-            android:id="@+id/searchbutton"
+            android:id="@+id/goToSearchButton"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="@string/search_button_label" />
-        <EditText
-            android:inputType="text"
-            android:id="@+id/searchbar"
-            android:layout_width="128dp"
-            android:layout_height="match_parent"
-            android:layout_toRightOf="@id/searchbutton"
-            android:layout_toEndOf="@id/searchbutton"
-            android:background="@color/background_material_light"/>
+            android:layout_height="wrap_content"
+            android:text="Search" />
 
-    </RelativeLayout>
-
-
+    </LinearLayout>
 
 </FrameLayout>

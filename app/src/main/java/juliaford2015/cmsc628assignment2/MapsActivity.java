@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.location.Location;
 import android.support.v4.app.FragmentActivity;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -34,13 +33,14 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
     private Marker myMarker;
     private Marker goalMarker;
 
-    private static final double RADIUS = 200;
-    private static final String STATE_MY_LOCATION = "MyLocation";
-    private static final String STATE_DESTINATION = "Destination";
-    private static final String STATE_SEARCH_TEXT = "SearchText";
+    public static final int REQUEST_CODE = 12345;
+    public static final double RADIUS = 200;
+    public static final String KEY_MY_LOCATION = "MyLocation";
+    public static final String KEY_DESTINATION = "Destination";
+    public static final String KEY_SEARCH_TEXT = "SearchText";
 
-    private LatLng myLatLng;
-    private LatLng goalLatLng;
+    private LatLng myPosition;
+    private LatLng destination;
     private static Location tempLocation = new Location("temp");
 
     private CircleOptions circleOptions = null;
@@ -55,49 +55,60 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
         mMap.setOnMyLocationChangeListener(this);
         (findViewById(R.id.fixButton)).setOnClickListener(this);
         (findViewById(R.id.clearButton)).setOnClickListener(this);
-        //(findViewById(R.id.searchbutton)).setOnClickListener(this);
+        (findViewById(R.id.goToSearchButton)).setOnClickListener(this);
         if (savedInstanceState != null) {
             try {
-                double[] myLoc = savedInstanceState.getDoubleArray(STATE_MY_LOCATION);
-                myLatLng = new LatLng(myLoc[0], myLoc[1]);
+                double[] myLoc = savedInstanceState.getDoubleArray(KEY_MY_LOCATION);
+                myPosition = new LatLng(myLoc[0], myLoc[1]);
             }
             catch (Exception e) {e.printStackTrace();}
             try {
-                double[] destLoc = savedInstanceState.getDoubleArray(STATE_DESTINATION);
-                goalLatLng = new LatLng(destLoc[0], destLoc[1]);
-                onMapClick(goalLatLng); //not the cleanest, but it works.
+                double[] destLoc = savedInstanceState.getDoubleArray(KEY_DESTINATION);
+                destination = new LatLng(destLoc[0], destLoc[1]);
+                setDestination(destination); //not the cleanest, but it works.
             }
             catch (Exception e) {
                 e.printStackTrace();
             }
             try {
-                ((EditText)(findViewById(R.id.search_bar))).setText(savedInstanceState.getString(STATE_SEARCH_TEXT));
+                ((EditText)(findViewById(R.id.search_bar))).setText(savedInstanceState.getString(KEY_SEARCH_TEXT));
             }
             catch (Exception e)
             {
                 e.printStackTrace();
             }
         }
-//        FixZoom();
+    }
+
+    private void setDestination(LatLng LL) {
+        destination = LL;
+        Toast.makeText(getApplicationContext(), "Go to: " +
+                String.format("%3.3f", destination.latitude) + " , " +
+                String.format("%3.3f", destination.longitude), Toast.LENGTH_SHORT).show();
+        try {
+            if (goalMarkerOptions == null)
+                goalMarkerOptions = new MarkerOptions().icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+            if (goalMarker != null)
+                goalMarker.remove();
+            goalMarker = (mMap.addMarker(goalMarkerOptions.position(destination).title(destination.toString())));
+
+            if (circleOptions == null)
+                circleOptions = new CircleOptions().radius(RADIUS).strokeColor(Color.RED).strokeWidth(2);
+            if (circle != null)
+                circle.remove();
+            circle = mMap.addCircle(circleOptions.center(destination));
+        }
+        catch (Exception e) {
+            e.printStackTrace(); // maybe it's not in focus or something
+        }
     }
 
     /**
      * pass LatLng -> move destination marker and circle
      */
     @Override
-    public void onMapClick(LatLng ll) {
-        goalLatLng = ll;
-        if (goalMarkerOptions == null)
-            goalMarkerOptions = new MarkerOptions().icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-        if (goalMarker != null)
-            goalMarker.remove();
-        goalMarker = (mMap.addMarker(goalMarkerOptions.position(goalLatLng).title(goalLatLng.toString())));
-
-        if (circleOptions == null)
-            circleOptions = new CircleOptions().radius(RADIUS).strokeColor(Color.RED).strokeWidth(2);
-        if (circle != null)
-            circle.remove();
-        circle = mMap.addCircle(circleOptions.center(goalLatLng));
+    public void onMapClick(LatLng LL) {
+        setDestination(LL);
     }
 
     /**
@@ -105,20 +116,20 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
      */
     @Override
     protected void onSaveInstanceState(Bundle savedInstanceState) {
-        if (myLatLng != null) savedInstanceState.putDoubleArray(STATE_MY_LOCATION,
-                    new double[]{myLatLng.latitude, myLatLng.longitude});
-        if (goalLatLng != null) savedInstanceState.putDoubleArray(STATE_DESTINATION,
-                    new double[]{goalLatLng.latitude, goalLatLng.longitude});
-        EditText searchbar = (EditText)findViewById(R.id.searchbar);
-        if (searchbar != null) savedInstanceState.putString(STATE_SEARCH_TEXT,
-                searchbar.getText().toString());
+        if (myPosition != null) savedInstanceState.putDoubleArray(KEY_MY_LOCATION,
+                new double[]{myPosition.latitude, myPosition.longitude});
+        if (destination != null) savedInstanceState.putDoubleArray(KEY_DESTINATION,
+                new double[]{destination.latitude, destination.longitude});
+//        EditText searchbar = (EditText)findViewById(R.id.searchbar);
+//        if (searchbar != null) savedInstanceState.putString(KEY_SEARCH_TEXT,
+//                searchbar.getText().toString());
     }
-
-    // Helper method for formatting map queries
-    private String toFormattedQuery(String unformStr, LatLng unformLL)
-    {
-        return "geo:" + unformLL.latitude + ',' + unformLL.longitude + "?q=" + unformStr;
-    }
+//
+//    // Helper method for formatting map queries
+//    private String toFormattedQuery(String unformStr, LatLng unformLL)
+//    {
+//        return "geo:" + unformLL.latitude + ',' + unformLL.longitude + "?q=" + unformStr;
+//    }
 
     @Override
     protected void onPause() {
@@ -130,7 +141,7 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
     protected void onResume() {
         super.onResume();
         setUpMapIfNeeded();
-        //startLocationUpdates();
+        reCenter();
     }
 
     /**
@@ -149,8 +160,9 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
                 setUpMap();
             }
         }
-        if (myLatLng != null) {
-            CameraPosition cameraPosition = new CameraPosition.Builder().target(myLatLng).zoom(20).build();
+        if (myPosition != null) {
+            //CameraPosition cameraPosition = new CameraPosition.Builder().target(myPosition).zoom(20).build();
+            CameraPosition cameraPosition = new CameraPosition.Builder().target(myPosition).build();
             CameraUpdate update = CameraUpdateFactory.newCameraPosition(cameraPosition);
             mMap.animateCamera(update);
         }
@@ -174,37 +186,48 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
 
     @Override
     public void onMyLocationChange(Location location) {
-        myLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+        myPosition = new LatLng(location.getLatitude(), location.getLongitude());
         // (set up and) move current position marker
         if (myMarkerOptions == null)
             myMarkerOptions = new MarkerOptions().icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
         if (myMarker != null)
             myMarker.remove();
-        myMarker = mMap.addMarker(myMarkerOptions.position(myLatLng).title(myLatLng.toString()));
+        myMarker = mMap.addMarker(myMarkerOptions.position(myPosition).title(myPosition.toString()));
         //  if there is no destination specified, just zoom to current position:
-        if (goalLatLng == null)
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(myLatLng));
+        if (destination == null)
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(myPosition));
         //  or, try to calculate distance between current and destination positions:
-        if (myLatLng != null && goalLatLng != null) {
+        if (myPosition != null && destination != null) {
             // we want straight-line distance, not pathfinding calculation
-            tempLocation.setLatitude(goalLatLng.latitude);
-            tempLocation.setLongitude(goalLatLng.longitude);
+            tempLocation.setLatitude(destination.latitude);
+            tempLocation.setLongitude(destination.longitude);
             double magDistance = (location.distanceTo(tempLocation));
             if (magDistance <= RADIUS) {
-                Toast.makeText(getApplicationContext(), "Distance: "+magDistance, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),
+                        "You are  "+magDistance + "m away!", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
-    private void FixZoom() {
-        if (goalLatLng != null) {
+    private void reCenter() {
+        if (destination != null) {
             LatLngBounds.Builder builder = new LatLngBounds.Builder();
-            builder.include(myLatLng);
-            builder.include(goalLatLng);
+            builder.include(myPosition);
+            builder.include(destination);
             LatLngBounds bounds = builder.build();
             mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 1));
             // zoom out a bit, otherwise markers will be on screen edges
             mMap.moveCamera(CameraUpdateFactory.zoomOut());
+        }
+    }
+
+    protected void onActivityResult (int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
+            double[] coords = data.getDoubleArrayExtra(KEY_DESTINATION);
+            if (coords.length == 2) {
+                setDestination( new LatLng(coords[0], coords[1]) );
+                reCenter();
+            }
         }
     }
 
@@ -216,23 +239,32 @@ public class MapsActivity extends FragmentActivity implements OnClickListener, O
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.fixButton:
-                FixZoom();
+                reCenter();
                 break;
             case R.id.clearButton:
-                goalLatLng = null;
+                destination = null;
                 if (goalMarker != null) goalMarker.remove();
                 if (circle != null) circle.remove();
                 break;
-            case R.id.searchbutton:
-                EditText searchbar = (EditText) findViewById(R.id.searchbar);
-                String searchtext = searchbar.getText().toString();
-                String formatted = toFormattedQuery(searchtext, myLatLng);
-                if (!searchtext.equals("")) {
-                    Uri myIntentUri = Uri.parse(formatted);
-                    Intent mapIntent = new Intent(Intent.ACTION_VIEW, myIntentUri);
-                    mapIntent.setPackage("com.google.android.apps.maps");
-
-                    startActivity(mapIntent);
+            case R.id.goToSearchButton:
+                if (myPosition != null) {
+                    Intent intent = new Intent(view.getContext(), SearchActivity.class);
+                    intent.putExtra(KEY_MY_LOCATION,
+                            new double[]{myPosition.latitude, myPosition.longitude});
+//                    //
+                    //                   intent.setPackage("com.google.android.apps.maps");
+                    //
+//
+//                    EditText searchbar = (EditText) findViewById(R.id.searchbar);
+//                    String searchtext = "walmart";//searchbar.getText().toString();
+//                    String formatted = toFormattedQuery(searchtext, myLatLng);
+////                    if (!searchtext.equals("")) {
+//                        Uri myIntentUri = Uri.parse(formatted);
+//                        Intent intent = new Intent(Intent.ACTION_VIEW, myIntentUri);
+                    intent.setPackage("com.google.android.apps.maps");
+                    //startActivity(intent);
+                    startActivityForResult(intent, REQUEST_CODE);
+//                    }
                 }
         }
     }
